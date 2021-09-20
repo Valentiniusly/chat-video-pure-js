@@ -104,12 +104,14 @@ const router = async () => {
 
       if (!socket.connected) {
         socket.on('connect', () => {
+          socket.emit('stopStream');
           myPeer = peerConnection(socket);
 
           const cb = () => videoBtnHandler(myPeer, socket, room);
           videoBtn.addEventListener('click', cb);
         });
       } else {
+        socket.emit('stopStream');
         myPeer = peerConnection(socket);
         const cb = () => videoBtnHandler(myPeer, socket, room);
         videoBtn.addEventListener('click', cb);
@@ -138,7 +140,8 @@ const router = async () => {
       });
 
       socket.on('stopStream', () => {
-        document.querySelector('video').remove();
+        const video = document.querySelector('video');
+        video && video.remove();
         document.getElementById('video-button').disabled = false;
       });
 
