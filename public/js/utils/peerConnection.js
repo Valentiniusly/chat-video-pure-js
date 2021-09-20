@@ -5,10 +5,7 @@ async function addVideoStream(video, stream) {
 }
 
 exports.peerConnection = function (socket) {
-  const myPeer = new Peer(socket.id, {
-    host: 'chat-pure-js.herokuapp.com/',
-    path: 'chat-pure-js.herokuapp.com/',
-  });
+  const myPeer = new Peer(socket.id);
   myPeer.on('call', (call) => {
     call.answer();
     document.getElementById('video-button').disabled = true;
