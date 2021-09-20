@@ -91,6 +91,7 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     const user = userLeave(socket.id);
+    socket.broadcast.emit('stopStream');
 
     if (user) {
       io.to(user.room).emit(
