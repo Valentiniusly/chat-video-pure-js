@@ -7,7 +7,6 @@ async function addVideoStream(video, stream) {
 exports.peerConnection = function (socket) {
   const myPeer = new Peer(socket.id, {
     host: '/',
-    port: 3001,
   });
   myPeer.on('call', (call) => {
     call.answer();
