@@ -8,6 +8,8 @@ exports.peerConnection = function (socket) {
   const myPeer = new Peer(socket.id, {
     secure: true,
     host: 'chat-pure-js.herokuapp.com',
+    port: 443,
+    path: '/',
   });
   myPeer.on('call', (call) => {
     call.answer();
