@@ -197,7 +197,8 @@ async function addVideoStream(video, stream) {
 
 exports.peerConnection = function (socket) {
   const myPeer = new Peer(socket.id, {
-    host: 'chat-pure-js.herokuapp.com',
+    host: 'chat-pure-js.herokuapp.com/',
+    path: 'chat-pure-js.herokuapp.com/',
   });
   myPeer.on('call', (call) => {
     call.answer();
