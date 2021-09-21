@@ -49,7 +49,7 @@ const router = async () => {
     myPeer && myPeer.destroy();
     const video = document.querySelector('video');
     if (video) {
-      socket.emit('stopStream', socket.id);
+      socket.emit('stopStream', { id: socket.id, room: sessionRoom });
       const stream = video.srcObject;
       const tracks = stream.getTracks();
 
@@ -134,7 +134,6 @@ const router = async () => {
       // receive chat message
       socket.on('message', (msg) => {
         outputMessage(msg, chat);
-
         chat.scrollTop = chat.scrollHeight;
       });
 

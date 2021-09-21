@@ -15,8 +15,8 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
-// current video streamer
-let streamer;
+// current video streamers
+const streamers = {};
 
 app.use(express.static(path.resolve(__dirname, 'public')));
 app.get('/*', (req, res) => {
@@ -73,15 +73,15 @@ io.on('connection', (socket) => {
   });
 
   socket.on('startStream', ({ id, room }) => {
-    streamer = id;
+    streamers[room] = id;
     const usersForStream = getUsersForStream({ id, room });
     socket.emit('usersForStream', usersForStream);
   });
 
-  socket.on('stopStream', (id) => {
-    if (id === streamer) {
-      socket.broadcast.emit('stopStream', streamer);
-      streamer = undefined;
+  socket.on('stopStream', ({ id, room }) => {
+    if (id === streamers[room]) {
+      io.to(room).emit('stopStream', streamers[room]);
+      streamers[room] = undefined;
     }
   });
 
@@ -103,9 +103,9 @@ io.on('connection', (socket) => {
     const user = userLeave(socket.id);
 
     if (user) {
-      if (user.id === streamer) {
-        socket.broadcast.emit('stopStream', streamer);
-        streamer = undefined;
+      if (user.id === streamers[user.room]) {
+        io.to(user.room).emit('stopStream', streamers[user.room]);
+        streamers[user.room] = undefined;
       }
       io.to(user.room).emit(
         'message',
