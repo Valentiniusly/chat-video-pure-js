@@ -46,10 +46,11 @@ const router = async () => {
     const sessionRoom = sessionStorage.getItem('room');
     const sessionName = sessionStorage.getItem('username');
 
+    // if user came from chat
     myPeer && myPeer.destroy();
     const video = document.querySelector('video');
     if (video) {
-      socket.emit('stopStream');
+      socket.emit('stopStream', socket.id);
       const stream = video.srcObject;
       const tracks = stream.getTracks();
 
@@ -60,7 +61,6 @@ const router = async () => {
       video.srcObject = null;
       video.remove();
     }
-
     if (sessionName) {
       socket.emit('leaveRoom');
       nameInput.value = sessionName;
@@ -73,6 +73,8 @@ const router = async () => {
       sessionStorage.setItem('username', username);
 
       form.removeEventListener('submit', submitHandler);
+
+      // cool repeating code
       if (!socket.connected) {
         socket.on('connect', () => {
           const room = sessionRoom || socket.id;
@@ -94,6 +96,7 @@ const router = async () => {
 
     const username = sessionStorage.getItem('username');
     if (!username) {
+      // user for the first time in the App
       navigateTo('/');
     } else {
       const chat = document.querySelector('.chat');
@@ -102,19 +105,13 @@ const router = async () => {
       const modal = document.querySelector('.modal-body');
       const videoBtn = document.getElementById('video-button');
 
+      // another cool repeating
       if (!socket.connected) {
         socket.on('connect', () => {
-          socket.emit('stopStream');
-          myPeer = peerConnection(socket);
-
-          const cb = () => videoBtnHandler(myPeer, socket, room);
-          videoBtn.addEventListener('click', cb);
+          initializePage(socket, myPeer, room);
         });
       } else {
-        socket.emit('stopStream');
-        myPeer = peerConnection(socket);
-        const cb = () => videoBtnHandler(myPeer, socket, room);
-        videoBtn.addEventListener('click', cb);
+        initializePage(socket, myPeer, room);
       }
 
       socket.emit('joinRoom', {
@@ -122,27 +119,33 @@ const router = async () => {
         room,
       });
 
+      // load messages in server runtime database
       socket.on('oldMessages', (messages) => {
         messages.forEach((msg) => {
           outputMessage(msg, chat);
         });
       });
 
+      // update users online
       socket.on('roomUsers', ({ room, users }) => {
         outputUsers(users, usersList);
         modal.innerHTML = document.querySelector('.users-container').innerHTML;
       });
 
+      // receive chat message
       socket.on('message', (msg) => {
         outputMessage(msg, chat);
 
         chat.scrollTop = chat.scrollHeight;
       });
 
-      socket.on('stopStream', () => {
-        const video = document.querySelector('video');
-        video && video.remove();
-        document.getElementById('video-button').disabled = false;
+      // stop stream if consumer
+      socket.on('stopStream', (id) => {
+        if (id !== socket.id) {
+          const video = document.querySelector('video');
+          video && video.remove();
+          document.getElementById('video-button').disabled = false;
+        }
       });
 
       chatForm.addEventListener('submit', messageHandler);
@@ -155,6 +158,14 @@ const router = async () => {
 
         e.target.elements.msg.value = '';
         e.target.elements.msg.focus();
+      }
+
+      function initializePage(socket, myPeer, room) {
+        socket.emit('stopStream', socket.id);
+        myPeer = peerConnection(socket);
+        videoBtn.addEventListener('click', () =>
+          videoBtnHandler(myPeer, socket, room)
+        );
       }
     }
   }
@@ -200,13 +211,14 @@ async function addVideoStream(video, stream) {
 
 exports.peerConnection = function (socket) {
   const myPeer = new Peer(socket.id);
+
+  // get stream
   myPeer.on('call', (call) => {
     call.answer();
     document.getElementById('video-button').disabled = true;
 
     const video = document.createElement('video');
     call.on('stream', (stream) => {
-      console.log(stream);
       addVideoStream(video, stream);
     });
   });
@@ -215,6 +227,7 @@ exports.peerConnection = function (socket) {
 };
 
 exports.videoBtnHandler = function (myPeer, socket, room) {
+  // start stream
   const myVideo = document.createElement('video');
   myVideo.muted = true;
 
@@ -230,7 +243,6 @@ exports.videoBtnHandler = function (myPeer, socket, room) {
 
       socket.emit('startStream', { id: socket.id, room });
       socket.on('usersForStream', (users) => {
-        console.log(users);
         users.forEach((user) => {
           myPeer.call(user.id, stream);
         });
@@ -300,7 +312,7 @@ module.exports = class Chat extends AbstractView {
               <div class="message-input">
                 <form id="chat-form">
                   <div class="input-group mb-3">
-                    <input type="text" id="msg" class="form-control" placeholder="Type message" required
+                    <input type="text" id="msg" class="form-control" autocomplete="off" placeholder="Type message" required
                       aria-label="Recipient's username" aria-describedby="button-addon2">
                     <button class="btn btn-dark" type="submit" id="button-addon2">Send</button>
                   </div>

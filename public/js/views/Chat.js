@@ -31,7 +31,7 @@ module.exports = class Chat extends AbstractView {
               <div class="message-input">
                 <form id="chat-form">
                   <div class="input-group mb-3">
-                    <input type="text" id="msg" class="form-control" placeholder="Type message" required
+                    <input type="text" id="msg" class="form-control" autocomplete="off" placeholder="Type message" required
                       aria-label="Recipient's username" aria-describedby="button-addon2">
                     <button class="btn btn-dark" type="submit" id="button-addon2">Send</button>
                   </div>

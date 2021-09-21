@@ -15,6 +15,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketio(server);
 
+// current video streamer
+let streamer;
+
 app.use(express.static(path.resolve(__dirname, 'public')));
 app.get('/*', (req, res) => {
   res.sendFile(path.resolve(__dirname, 'public', 'index.html'));
@@ -38,6 +41,8 @@ io.on('connection', (socket) => {
         room: user.room,
         users: getRoomUsers(user.room),
       });
+    } else {
+      console.log('Something went wrong');
     }
   });
 
@@ -62,17 +67,22 @@ io.on('connection', (socket) => {
         room: user.room,
         users: getRoomUsers(user.room),
       });
+    } else {
+      console.log('Something went wrong');
     }
   });
 
   socket.on('startStream', ({ id, room }) => {
+    streamer = id;
     const usersForStream = getUsersForStream({ id, room });
-    console.log(usersForStream);
     socket.emit('usersForStream', usersForStream);
   });
 
-  socket.on('stopStream', () => {
-    socket.broadcast.emit('stopStream');
+  socket.on('stopStream', (id) => {
+    if (id === streamer) {
+      socket.broadcast.emit('stopStream', streamer);
+      streamer = undefined;
+    }
   });
 
   socket.on('chatMessage', (msg) => {
@@ -91,9 +101,12 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     const user = userLeave(socket.id);
-    socket.broadcast.emit('stopStream');
 
     if (user) {
+      if (user.id === streamer) {
+        socket.broadcast.emit('stopStream', streamer);
+        streamer = undefined;
+      }
       io.to(user.room).emit(
         'message',
         formatMessage({
@@ -108,6 +121,8 @@ io.on('connection', (socket) => {
         room: user.room,
         users: getRoomUsers(user.room),
       });
+    } else {
+      console.log('Something went wrong');
     }
   });
 });

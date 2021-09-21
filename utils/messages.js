@@ -1,3 +1,4 @@
+// database
 const messages = [];
 
 function formatMessage({ username, room, text, type }) {

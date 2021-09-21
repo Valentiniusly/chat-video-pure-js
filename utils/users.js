@@ -1,3 +1,4 @@
+// database
 const users = [];
 
 function userJoin(id, username, room) {
